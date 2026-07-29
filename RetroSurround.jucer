@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="Fs5pt1AB" name="RetroSurround" projectType="audioplug" version="0.1.0"
+              bundleIdentifier="com.retrosurround.plugin"
+              companyName="Daniel Ricardo"
+              pluginManufacturer="Daniel Ricardo"
+              pluginManufacturerCode="Hbrw"
+              pluginCode="Rtsr"
+              pluginFormats="buildVST3"
+              pluginVST3Category="Fx,Spatial"
+              pluginName="RetroSurround"
+              pluginDesc="Stereo-to-multichannel surround decoder (built on FreeSurround's decoding engine by Christian Kothe)"
+              cppLanguageStandard="17"
+              displaySplashScreen="0"
+              jucerFormatVersion="1">
+  <MAINGROUP id="Fs5pt1MG" name="RetroSurround">
+    <GROUP id="Fs5pt1SG" name="Source">
+      <FILE id="Fs001" name="PluginProcessor.h" compile="0" resource="0" file="Source/PluginProcessor.h"/>
+      <FILE id="Fs002" name="PluginProcessor.cpp" compile="1" resource="0" file="Source/PluginProcessor.cpp"/>
+      <FILE id="Fs003" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="Fs004" name="freesurround_adapter.h" compile="0" resource="0" file="Source/freesurround_adapter.h"/>
+      <FILE id="Fs005" name="windows_channel_order.h" compile="0" resource="0" file="Source/windows_channel_order.h"/>
+      <FILE id="Fs016" name="juce_channel_sets.h" compile="0" resource="0" file="Source/juce_channel_sets.h"/>
+      <FILE id="Fs017" name="biquad.h" compile="0" resource="0" file="Source/biquad.h"/>
+      <FILE id="Fs018" name="RetroLookAndFeel.h" compile="0" resource="0" file="Source/RetroLookAndFeel.h"/>
+      <FILE id="Fs006" name="freesurround_decoder.h" compile="0" resource="0" file="Source/freesurround_decoder.h"/>
+      <FILE id="Fs007" name="freesurround_decoder.cpp" compile="1" resource="0" file="Source/freesurround_decoder.cpp"/>
+      <FILE id="Fs008" name="channelmaps.h" compile="0" resource="0" file="Source/channelmaps.h"/>
+      <FILE id="Fs009" name="channelmaps.cpp" compile="1" resource="0" file="Source/channelmaps.cpp"/>
+      <FILE id="Fs010" name="kiss_fft.h" compile="0" resource="0" file="Source/kiss_fft.h"/>
+      <FILE id="Fs011" name="kiss_fft.c" compile="1" resource="0" file="Source/kiss_fft.c"/>
+      <FILE id="Fs012" name="kiss_fftr.h" compile="0" resource="0" file="Source/kiss_fftr.h"/>
+      <FILE id="Fs013" name="kiss_fftr.c" compile="1" resource="0" file="Source/kiss_fftr.c"/>
+      <FILE id="Fs014" name="_kiss_fft_guts.h" compile="0" resource="0" file="Source/_kiss_fft_guts.h"/>
+      <FILE id="Fs015" name="kiss_fft_log.h" compile="0" resource="0" file="Source/kiss_fft_log.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <EXPORTFORMATS>
+    <VS2022 targetFolder="Builds/VisualStudio2022" extraDefs="kiss_fft_scalar=double&#10;JUCE_VST3_CAN_REPLACE_VST2=0">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="RetroSurround"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="RetroSurround"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path=""/>
+        <MODULEPATH id="juce_audio_devices" path=""/>
+        <MODULEPATH id="juce_audio_formats" path=""/>
+        <MODULEPATH id="juce_audio_plugin_client" path=""/>
+        <MODULEPATH id="juce_audio_processors" path=""/>
+        <MODULEPATH id="juce_audio_utils" path=""/>
+        <MODULEPATH id="juce_core" path=""/>
+        <MODULEPATH id="juce_data_structures" path=""/>
+        <MODULEPATH id="juce_events" path=""/>
+        <MODULEPATH id="juce_graphics" path=""/>
+        <MODULEPATH id="juce_gui_basics" path=""/>
+        <MODULEPATH id="juce_gui_extra" path=""/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+</JUCERPROJECT>
