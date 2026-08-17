@@ -46,7 +46,7 @@ public:
         : AudioProcessorEditor(&p), proc(p)
     {
         setLookAndFeel(&lookAndFeel);
-        setSize(700, 540);
+        setSize(700, 570);
         setResizable(true, true);
         // Confirmed from a real screenshot: the editor was never marked
         // resizable, so when a host opened it in a window larger than
@@ -55,7 +55,7 @@ public:
         // the size this layout was actually designed at; max is
         // generous headroom without inviting an absurdly stretched
         // window that's mostly empty space.
-        setResizeLimits(700, 540, 1050, 900);
+        setResizeLimits(700, 570, 1050, 900);
 
         titleLabel.setText("RETROSURROUND", juce::dontSendNotification);
         titleLabel.setFont(retroMonoFont(15.0f));
@@ -92,6 +92,8 @@ public:
                  "FRONT SEP", proc.frontSeparation, "MONO", "WIDE");
         addSlider(rearSepLabel, rearSepSlider, rearSepValue, rearSepMin, rearSepMax,
                  "REAR SEP", proc.rearSeparation, "MONO", "WIDE");
+        addSlider(rearCoherenceLabel, rearCoherenceSlider, rearCoherenceValue, rearCoherenceMin, rearCoherenceMax,
+                 "REAR COHERENCE", proc.rearCoherence, "WIDE", "SAFE");
         addSlider(wrapLabel, wrapSlider, wrapValue, wrapMin, wrapMax,
                  "CIRCULAR WRAP", proc.circularWrap, "0 DEG", "360 DEG");
         addSlider(shiftLabel, shiftSlider, shiftValue, shiftMin, shiftMax,
@@ -144,6 +146,7 @@ public:
         layout(centerImageLabel, centerImageSlider, centerImageValue, centerImageMin, centerImageMax);
         layout(frontSepLabel, frontSepSlider, frontSepValue, frontSepMin, frontSepMax);
         layout(rearSepLabel, rearSepSlider, rearSepValue, rearSepMin, rearSepMax);
+        layout(rearCoherenceLabel, rearCoherenceSlider, rearCoherenceValue, rearCoherenceMin, rearCoherenceMax);
         layout(wrapLabel, wrapSlider, wrapValue, wrapMin, wrapMax);
         layout(shiftLabel, shiftSlider, shiftValue, shiftMin, shiftMax);
         layout(depthLabel, depthSlider, depthValue, depthMin, depthMax);
@@ -230,6 +233,7 @@ private:
         resetParam(proc.lowCutoffHz);
         resetParam(proc.highCutoffHz);
         resetParam(proc.bassRedirection);
+        resetParam(proc.rearCoherence);
         // Reset now covers everything, including channel setup and the
         // legacy toggle -- deliberately reversing an earlier design
         // choice to leave those alone, per direct feedback that a
@@ -238,6 +242,7 @@ private:
         resetParam(proc.legacyTransform);
         for (auto pair : { std::pair<juce::Slider*, juce::AudioParameterFloat*>{&centerImageSlider, proc.centerImage},
                            {&frontSepSlider, proc.frontSeparation}, {&rearSepSlider, proc.rearSeparation},
+                           {&rearCoherenceSlider, proc.rearCoherence},
                            {&wrapSlider, proc.circularWrap}, {&shiftSlider, proc.shift},
                            {&depthSlider, proc.depth}, {&focusSlider, proc.focus},
                            {&lowCutoffSlider, proc.lowCutoffHz}, {&highCutoffSlider, proc.highCutoffHz} })
@@ -279,13 +284,14 @@ private:
     juce::Label legacyLabel;
     juce::ToggleButton legacyToggle;
 
-    juce::Label centerImageLabel, frontSepLabel, rearSepLabel, wrapLabel, shiftLabel,
+    juce::Label centerImageLabel, frontSepLabel, rearSepLabel, rearCoherenceLabel, wrapLabel, shiftLabel,
                 depthLabel, focusLabel, lowCutoffLabel, highCutoffLabel, bassRedirLabel;
-    juce::Slider centerImageSlider, frontSepSlider, rearSepSlider, wrapSlider, shiftSlider,
+    juce::Slider centerImageSlider, frontSepSlider, rearSepSlider, rearCoherenceSlider, wrapSlider, shiftSlider,
                  depthSlider, focusSlider, lowCutoffSlider, highCutoffSlider;
-    juce::Label centerImageValue, frontSepValue, rearSepValue, wrapValue, shiftValue,
+    juce::Label centerImageValue, frontSepValue, rearSepValue, rearCoherenceValue, wrapValue, shiftValue,
                 depthValue, focusValue, lowCutoffValue, highCutoffValue;
     juce::Label centerImageMin, centerImageMax, frontSepMin, frontSepMax, rearSepMin, rearSepMax,
+                rearCoherenceMin, rearCoherenceMax,
                 wrapMin, wrapMax, shiftMin, shiftMax, depthMin, depthMax, focusMin, focusMax,
                 lowCutoffMin, lowCutoffMax, highCutoffMin, highCutoffMax; // last two stay empty/unused text -- Hz is already self-explanatory
     juce::ToggleButton bassRedirToggle;

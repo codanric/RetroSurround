@@ -89,6 +89,23 @@ public:
         for (unsigned i = 0; i < numChannels_; i++)
             if (channelIds_[i] == ci_lfe) { lfeIndex_ = i; break; }
 
+        // For the rear-coherence fix: found and empirically confirmed
+        // that FreeSurround's decoded back-left/back-right pair comes
+        // out perfectly anti-phase (correlation -1.0) for genuinely
+        // mono-sourced surround content, which is the majority of what
+        // classic Dolby Surround matrix encoding (and even PLII-style
+        // decoding of it) actually carries -- see chat discussion. Only
+        // applied to this specific pair, which is what was directly
+        // tested; side_center_left/right (present in some other channel
+        // configurations) may have a similar issue but hasn't been
+        // separately verified, so it's deliberately left untouched here.
+        backLeftIndex_ = numChannels_;
+        backRightIndex_ = numChannels_;
+        for (unsigned i = 0; i < numChannels_; i++) {
+            if (channelIds_[i] == ci_back_left) backLeftIndex_ = i;
+            if (channelIds_[i] == ci_back_right) backRightIndex_ = i;
+        }
+
         mainCrossovers_.assign(numChannels_, LRCrossover());
         updateCrossoverDesign();
 
@@ -115,6 +132,13 @@ public:
     void setDepth(float v) { dec_->depth(v); }
     void setFocus(float v) { dec_->focus(v); }
     void setBassRedirection(bool v) { bassRedirectionEnabled_ = v; }
+    // 0 = unchanged FreeSurround behavior (full width, cancellation-prone
+    // for mono-sourced surround content); 1 = fully mono-compatible
+    // (Back-L and Back-R forced identical, guaranteed no cancellation).
+    // Linear blend -- see chat discussion for the derivation and the
+    // empirical validation of what it does to both the cancellation
+    // case and genuine channel differentiation.
+    void setRearCoherence(float v) { rearCoherence_ = v; }
     // Drives the dedicated crossover filter (see class comment), NOT
     // FreeSurround's own low_cutoff()/high_cutoff() -- those are never
     // called; dec_'s internal bass_redirection stays permanently off.
@@ -166,6 +190,23 @@ public:
             for (int i = take; i < n; i++) outChannels[c][i] = 0.0f;
             queue_[c].erase(queue_[c].begin(), queue_[c].begin() + take);
         }
+
+        // Rear coherence blend -- applied after bass management, as a
+        // final pass on the actual output values. Only runs when this
+        // channel configuration genuinely has both a back-left and a
+        // back-right channel (some configurations, like 7.1 Panorama,
+        // have no back pair at all -- see channel_setup definitions).
+        if (rearCoherence_ > 0.0f && backLeftIndex_ < numChannels_ && backRightIndex_ < numChannels_) {
+            float* bl = outChannels[backLeftIndex_];
+            float* br = outChannels[backRightIndex_];
+            for (int i = 0; i < n; i++) {
+                double side = (double(bl[i]) - double(br[i])) * 0.5;
+                double newBl = (1.0 - rearCoherence_) * bl[i] + rearCoherence_ * side;
+                double newBr = (1.0 - rearCoherence_) * br[i] + rearCoherence_ * side;
+                bl[i] = float(newBl);
+                br[i] = float(newBr);
+            }
+        }
     }
 
     void reset() {
@@ -194,6 +235,9 @@ private:
     double sampleRate_ = 48000.0;
 
     unsigned lfeIndex_ = 0;
+    unsigned backLeftIndex_ = 0;
+    unsigned backRightIndex_ = 0;
+    float rearCoherence_ = 0.0f; // 0 = default/unchanged FreeSurround behavior, for this test build
     bool bassRedirectionEnabled_ = false;
     float lowCutoffHz_ = 40.0f;
     float highCutoffHz_ = 90.0f;

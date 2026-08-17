@@ -66,6 +66,8 @@ public:
             "highCutoffHz", "Bass Crossover High (Hz)", 20.0f, 500.0f, 90.0f));
         addParameter(bassRedirection = new juce::AudioParameterBool(
             "bassRedirection", "Bass Redirection", false));
+        addParameter(rearCoherence = new juce::AudioParameterFloat(
+            "rearCoherence", "Rear Coherence", 0.0f, 1.0f, 0.0f));
         addParameter(legacyTransform = new juce::AudioParameterBool(
             "legacyTransform", "5.1: Use Legacy Transform", false));
     }
@@ -168,6 +170,7 @@ public:
         newAdapter->setLowCutoffHz(lowCutoffHz->get());
         newAdapter->setHighCutoffHz(highCutoffHz->get());
         newAdapter->setBassRedirection(bassRedirection->get());
+        newAdapter->setRearCoherence(rearCoherence->get());
 
         unsigned newNumOutputChannels = newAdapter->numChannels();
         std::vector<std::vector<float>> newScratchOut(newNumOutputChannels, std::vector<float>(size_t(samplesPerBlock), 0.0f));
@@ -342,6 +345,7 @@ public:
     juce::AudioParameterFloat* lowCutoffHz;
     juce::AudioParameterFloat* highCutoffHz;
     juce::AudioParameterBool* bassRedirection;
+    juce::AudioParameterFloat* rearCoherence;
     juce::AudioParameterBool* legacyTransform; // only meaningful when negotiated layout is 5.1's channel set
 
 private:
@@ -397,6 +401,7 @@ private:
         adapter->setLowCutoffHz(lowCutoffHz->get());
         adapter->setHighCutoffHz(highCutoffHz->get());
         adapter->setBassRedirection(bassRedirection->get());
+        adapter->setRearCoherence(rearCoherence->get());
     }
 
     juce::CriticalSection adapterLock;
