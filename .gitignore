@@ -1,0 +1,25 @@
+# Generated JUCE/CMake build trees and VST3 bundles
+/build-release/
+/build*/
+/Builds/
+/cmake-build-*/
+CMakeUserPresets.json
+CMakeCache.txt
+CMakeFiles/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.user
+*.pdb
+*.ilk
+*.obj
+*.idb
+*.ipch
+*.tlog/
+*.lastbuildstate
+*.exp
+*.lib
+*.dll
+*.vst3/

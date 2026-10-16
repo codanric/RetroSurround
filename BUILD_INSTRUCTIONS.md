@@ -1,31 +1,74 @@
 # RetroSurround VST3 — Build Instructions
 
-## Part 1 — Get JUCE + Projucer
+## Build a production VST3
 
-1. https://juce.com/get-juce/ → download JUCE (includes `Projucer.exe`).
-2. Extract somewhere with **no spaces in the path** — e.g. `C:\dev\JUCE\`.
-3. Run `Projucer.exe`. First run may ask you to confirm your JUCE
-   installation path — point it at the folder from step 2.
+Before building, you must install **CMake 3.22 or newer**, **Visual Studio
+2022 or Build Tools with the Desktop development with C++ workload**, and a
+**Windows 10/11 SDK**. These are required system build tools; the script does
+not install them. JUCE can be supplied from an existing source checkout or
+downloaded into the ignored build directory with `-BootstrapJuce`.
 
-## Part 2 — Open and build
+1. Install CMake from the [official CMake download page](https://cmake.org/download/).
+   Choose the Windows x64 installer and enable adding CMake to `PATH`.
+2. Install [Visual Studio 2022 Community](https://visualstudio.microsoft.com/vs/community/)
+   or [Visual Studio 2022 Build Tools](https://visualstudio.microsoft.com/downloads/).
+   In Visual Studio Installer, select the **Desktop development with C++**
+   workload. Ensure the MSVC x64/x86 build tools and a Windows 10 or Windows 11
+   SDK are selected in the workload's individual components.
+3. If no Windows SDK was selected with that workload, reopen Visual Studio
+   Installer, choose **Modify → Individual components**, select a **Windows 10
+   SDK** or **Windows 11 SDK**, and apply the change.
+4. Open a new PowerShell window after installation so the updated `PATH` is
+   available. The build script detects CMake, Visual Studio C++ tools, and the
+   SDK and reports a clear error if one is missing.
 
-1. Keep this repo's folder structure as-is — `RetroSurround.jucer` needs
-   to stay alongside `Source/`.
-2. In Projucer: **File → Open...** → `RetroSurround.jucer`. Every source
-   file and module is already configured; nothing to fill in.
-3. Click **Visual Studio 2022** in the exporter list → **Save and Open
-   in IDE**.
-4. In Visual Studio, build **Release**.
+The script configures an x64 build and explicitly compiles the **Release**
+target.
+
+```powershell
+.\Build-Release.ps1 -JucePath C:\path\to\JUCE -Clean #replace with JUCE real path
+```
+
+The same build can be started from Command Prompt or Explorer with the batch
+launcher. Pass the path to your JUCE checkout, or let the script bootstrap it:
+
+```bat
+Build-Release.bat -JucePath "C:\path\to\JUCE" -Clean
+Build-Release.bat -BootstrapJuce -Clean
+```
+
+The batch file forwards its arguments to PowerShell and pauses after a failed
+build so the error remains visible.
+
+If JUCE is not already available, the optional isolated bootstrap is:
+
+```powershell
+.\Build-Release.ps1 -BootstrapJuce -Clean
+```
+
+This pins JUCE to 8.0.15 under `build-release/_deps/JUCE/`; JUCE bootstrap
+does not install the required system build tools. To use nonstandard tool
+locations, pass `-CMakePath` and `-VisualStudioGenerator`, set
+`JUCE_PATH`, or pass `-JucePath`. Supported generator examples are
+`Visual Studio 17 2022` and `Visual Studio 16 2019`. The script prefers JUCE
+8.0.15 when it is present beside the repository; pass
+`-JucePath` to select another checkout explicitly.
+
+Build files and downloaded JUCE sources stay under the ignored
+`build-release/` directory. `-OutputDirectory` can select another
+repository-local path; `-Clean` removes it before configuration. The script
+checks for the x64 VST3 module before reporting success and never selects
+Debug.
 
 Built VST3 lands at:
 ```
-Builds/VisualStudio2022/x64/Release/VST3/RetroSurround.vst3
+build-release/RetroSurround_artefacts/Release/VST3/RetroSurround.vst3
 ```
 Copy to `C:\Program Files\Common Files\VST3\` and rescan in your host.
 
-If you get a linker error about a missing `.lib` file after pulling a
-newer commit, delete the `Builds/` folder and re-export from Projucer
-rather than rebuilding stale generated project files.
+If a build fails after source or JUCE changes, rerun with `-Clean` to
+regenerate the build tree. Close any host using the output bundle before
+cleaning it.
 
 ## Latency
 

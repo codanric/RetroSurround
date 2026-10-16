@@ -100,7 +100,9 @@ public:
     {
         lastSampleRate = sampleRate;
         lastBlockSize = samplesPerBlock;
-        rebuildForSetup(detectNegotiatedSetup(), sampleRate, samplesPerBlock);
+        currentSetup = detectNegotiatedSetup();
+        preferredSetup = currentSetup;
+        rebuildForSetup(currentSetup, sampleRate, samplesPerBlock);
     }
 
     // Actively requests a channel configuration change, rather than just
@@ -117,6 +119,16 @@ public:
         layout.outputBuses.getReference(0) = buildChannelSetFor(newSetup);
         if (!checkBusesLayoutSupported(layout)) return false;
         if (!setBusesLayout(layout)) return false;
+        // Some hosts accept a channel count but substitute their own
+        // channel set. A named RetroSurround layout must only be reported
+        // as selected when the exact speaker arrangement was accepted.
+        if (getBus(false, 0)->getCurrentLayout() != buildChannelSetFor(newSetup)) {
+            currentSetup = detectNegotiatedSetup();
+            preferredSetup = currentSetup;
+            rebuildForSetup(currentSetup, lastSampleRate, lastBlockSize);
+            return false;
+        }
+        preferredSetup = newSetup;
         rebuildForSetup(newSetup, lastSampleRate, lastBlockSize);
         updateHostDisplay();
         return true;
@@ -288,7 +300,10 @@ public:
     void setCurrentProgram(int) override {}
     const juce::String getProgramName(int) override { return {}; }
     void changeProgramName(int, const juce::String&) override {}
-    // Serializes every parameter to a fixed, versioned binary layout.
+    // Serializes the selected speaker layout and every parameter to a
+    // versioned binary layout. The setup hint also covers hosts that
+    // preserve only a generic/discrete 8-channel bus instead of JUCE's
+    // exact speaker positions.
     // This was previously an empty stub -- meaning every parameter,
     // including Bass Redirection, silently reset to its constructor
     // default (off, for that one) any time the host destroyed and
@@ -300,7 +315,8 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override
     {
         juce::MemoryOutputStream stream(destData, true);
-        stream.writeInt(1); // format version, for future-proofing
+        stream.writeInt(2); // format version
+        stream.writeInt(int(currentSetup == cs_legacy ? cs_5point1 : currentSetup));
         stream.writeFloat(centerImage->get());
         stream.writeFloat(frontSeparation->get());
         stream.writeFloat(rearSeparation->get());
@@ -311,6 +327,7 @@ public:
         stream.writeFloat(lowCutoffHz->get());
         stream.writeFloat(highCutoffHz->get());
         stream.writeBool(bassRedirection->get());
+        stream.writeFloat(rearCoherence->get());
         stream.writeBool(legacyTransform->get());
     }
 
@@ -318,7 +335,14 @@ public:
     {
         juce::MemoryInputStream stream(data, size_t(sizeInBytes), false);
         int version = stream.readInt();
-        if (version != 1) return; // unknown/corrupt state -- keep current values rather than guess
+        if (version != 1 && version != 2) return; // unknown/corrupt state -- keep current values rather than guess
+        if (version == 2) {
+            const auto setup = static_cast<channel_setup>(stream.readInt());
+            if (isSupportedSetup(setup)) {
+                preferredSetup = setup;
+                currentSetup = setup;
+            }
+        }
         *centerImage = stream.readFloat();
         *frontSeparation = stream.readFloat();
         *rearSeparation = stream.readFloat();
@@ -329,7 +353,10 @@ public:
         *lowCutoffHz = stream.readFloat();
         *highCutoffHz = stream.readFloat();
         *bassRedirection = stream.readBool();
+        if (version == 2) *rearCoherence = stream.readFloat();
         *legacyTransform = stream.readBool();
+        if (adapter && int(numOutputChannels) == int(freesurround_decoder::num_channels(preferredSetup)))
+            rebuildForSetup(preferredSetup, lastSampleRate, lastBlockSize);
     }
 
     channel_setup getCurrentSetup() const { return currentSetup; }
@@ -377,15 +404,31 @@ private:
 
     channel_setup detectNegotiatedSetup() const
     {
-        int n = getBus(false, 0)->getCurrentLayout().size();
+        const auto negotiated = getBus(false, 0)->getCurrentLayout();
+        // These layouts can share a channel count while representing
+        // different physical speakers. Match exact speaker identities
+        // before falling back to a saved setup hint for generic host buses.
+        for (auto setup : kSupportedSetups)
+            if (negotiated == buildChannelSetFor(setup)) return setup;
+
+        int n = negotiated.size();
+        if (int(freesurround_decoder::num_channels(preferredSetup)) == n)
+            return preferredSetup;
         switch (n) {
             case 3: return cs_stereo;
             case 5: return cs_4point1;
             case 6: return legacyTransform->get() ? cs_legacy : cs_5point1;
             case 7: return cs_6point1;
-            case 8: return cs_7point1; // standard variant; panorama/tri-center need exact channel types a non-JUCE host may not present the same way, so count-based matching can't disambiguate them -- say the word if you need one of those specifically and we'll add a dedicated toggle
+            case 8: return cs_7point1;
             default: return cs_5point1; // shouldn't happen given isBusesLayoutSupported, but a safe fallback
         }
+    }
+
+    static bool isSupportedSetup(channel_setup setup)
+    {
+        for (auto candidate : kSupportedSetups)
+            if (candidate == setup) return true;
+        return false;
     }
 
     void applyAllParameters()
@@ -407,6 +450,7 @@ private:
     juce::CriticalSection adapterLock;
     std::unique_ptr<FreeSurroundAdapter> adapter;
     channel_setup currentSetup = cs_5point1;
+    channel_setup preferredSetup = cs_5point1;
     unsigned numOutputChannels = 6;
     unsigned internalBlockSize = 1024;
     double lastSampleRate = 48000.0;
